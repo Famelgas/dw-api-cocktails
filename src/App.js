@@ -1,27 +1,60 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 
-export default function App() {
+const App = () => {
   const navbarRef = useRef(null);
   const homeRef = useRef(null);
   const cocktailsRef = useRef(null);
+  const [cocktails, setCocktails] = useState([]);
+  const [currentCocktailIndex, setCurrentCocktailIndex] = useState(0);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupImageSrc, setPopupImageSrc] = useState("");
 
   useEffect(() => {
     window.onscroll = function() {myFunction()};
-
+  
     var navbar = document.getElementById("navbar");
-
     var fixed = navbar.offsetTop;
-
+  
     function myFunction() {
       if (window.scrollY >= fixed) {
-        navbar.classList.add("fixed")
+        navbar.classList.add("fixed");
       } else {
         navbar.classList.remove("fixed");
       }
     }
+  
+    fetchCocktailsData();
+  
+    const intervalId = setInterval(() => {
+      fetchCocktailsData();
+    }, 5000);
+  
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
+  const changeCocktailImage = () => {
+    if (cocktails && cocktails.drinks && cocktails.drinks.length > 0) {
+      setCurrentCocktailIndex((prevIndex) => (prevIndex + 1) % cocktails.drinks.length);
+      setPopupImageSrc(cocktails.drinks[currentCocktailIndex].strDrinkThumb);
+    }
+  };
+  
+  const fetchCocktailsData = () => {
+    fetch("https://www.thecocktaildb.com/api/json/v1/1/random.php/")
+      .then(response => response.json())
+      .then(data => {
+        setCocktails(data);
+  
+        setPopupImageSrc(data.drinks[0].strDrinkThumb);
+
+        changeCocktailImage();
+      })
+      .catch(error => console.error("Error fetching cocktails:", error));
+  };
+  
   const scrollToRef = (ref) => {
     if (ref && ref.current) {
       const topOffset = ref.current.getBoundingClientRect().top + window.scrollY - navbarRef.current.clientHeight;
@@ -37,9 +70,6 @@ export default function App() {
     console.log("Next button clicked");
   };
   
-  const [showPopup, setShowPopup] = useState(false);
-  const [popupImageSrc, setPopupImageSrc] = useState("");
-  
   const handlePopUp = (src) => {
     setShowPopup(true);
     setPopupImageSrc(src);
@@ -47,7 +77,7 @@ export default function App() {
   
   const closePopup = () => {
     setShowPopup(false);
-    setPopupImageSrc("");
+    setPopupImageSrc(cocktails.drinks[currentCocktailIndex].strDrinkThumb);
   };
   
   const handleFilters = () => {
@@ -86,12 +116,11 @@ export default function App() {
       </div>
 
       <div className="page">
-        <div className="home" ref={homeRef}>
+      <div className="home" ref={homeRef}>
           <div className="home-container">
-
             <div className="home-page-cocktail—border">
-              <div className="home-page-photo-container" onClick={() => handlePopUp(require("./logo512.png"))}>
-                  <img className="home-page-photo" loading="lazy" src={require("./logo512.png")}/>
+              <div className="home-page-photo-container" onClick={() => handlePopUp(popupImageSrc)}>
+                <img className="home-page-photo" loading="lazy" src={popupImageSrc} alt="Cocktail" />
               </div>
             </div>
           </div>
@@ -233,3 +262,5 @@ export default function App() {
     </div>
   );
 }
+
+export default App;
