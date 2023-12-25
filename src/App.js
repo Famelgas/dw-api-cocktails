@@ -13,17 +13,9 @@ const App = () => {
   const [popupImageSrc, setPopupImageSrc] = useState("");
   const [popupCocktail, setPopupCocktail] = useState(null);
 
-  const [filterOptions, setFilterOptions] = useState({
-    categories: [],
-    glasses: [],
-    ingredients: [],
-    alcoholic: [],
-  });
+  const [categories, setCategories] = useState([]);
 
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedAlcoholics, setSelectedAlcoholics] = useState([]);
-  const [selectedGlasses, setSelectedGlasses] = useState([]);
-  const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
 
   useEffect(() => {
@@ -120,33 +112,23 @@ const App = () => {
     if (cocktail === null) {
       setPopupImageSrc("");
       setPopupCocktail(null);
-      fetchFilterOptions();
+      fetchCategories();
     } else {
       setPopupImageSrc(cocktail.strDrinkThumb);
       setPopupCocktail(cocktail);
     }
   };
 
-  const fetchFilterOptions = () => {
-    const endpoints = ['c', 'g', 'i', 'a'];
-    const fetchPromises = endpoints.map(endpoint =>
-      fetch(`https://www.thecocktaildb.com/api/json/v1/1/list.php?${endpoint}=list`)
-        .then(response => response.json())
-        .then(data => data.drinks)
-        .catch(error => console.error(`Error fetching ${endpoint} filter options:`, error))
-    );
-
-    Promise.all(fetchPromises)
-      .then(dataArray => {
-        const [categories, glasses, ingredients, alcoholic] = dataArray;
-        setFilterOptions({
-          categories,
-          glasses,
-          ingredients,
-          alcoholic,
-        });
-      });
+  const fetchCategories = () => {
+    fetch("https://www.thecocktaildb.com/api/json/v1/1/list.php?c=list")
+      .then(response => response.json())
+      .then(data => {
+        const categories = data.drinks || [];
+        setCategories(categories);
+      })
+      .catch(error => console.error("Error fetching category filter options:", error));
   };
+  
   
   const closePopup = () => {
     setShowPopup(false);
@@ -299,12 +281,12 @@ const App = () => {
                   <div className="filters-content">
                     <h3>Categories</h3>
                     <div className="filters-options">
-                      <ul style={{ columns: 2 }}>
-                        {filterOptions.categories.map((filter, index) => (
+                      <ul>
+                        {categories.map((filter, index) => (
                           <li
                             key={index}
-                            onClick={() => toggleSelectedValue(filter.strCategory, selectedCategories, setSelectedCategories)}
-                            className={selectedCategories.includes(filter.strCategory) ? 'selected' : ''}
+                            onClick={() => setSelectedCategory(selectedCategory === filter.strCategory ? null : filter.strCategory)}
+                            className={selectedCategory === filter.strCategory ? 'selected' : ''}
                           >
                             {filter.strCategory}
                           </li>
@@ -313,82 +295,33 @@ const App = () => {
 
                     </div>
 
-                    <hr />
-
-                    <h3>Alcohol</h3>
-                    <div className="filters-options">
-                      <ul>
-                        {filterOptions.alcoholic.map((filter, index) => (
-                          <li
-                            key={index}
-                            onClick={() => toggleSelectedValue(filter.strAlcoholic, selectedAlcoholics, setSelectedAlcoholics)}
-                            className={selectedAlcoholics.includes(filter.strAlcoholic) ? 'selected' : ''}
-                          >
-                            {filter.strAlcoholic}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    
-                    <hr />
-
-                    <h3>Glasses</h3>
-                    <div className="filters-options">
-                      <ul style={{ columns: 2 }}>
-                        {filterOptions.glasses.map((filter, index) => (
-                          <li
-                            key={index}
-                            onClick={() => toggleSelectedValue(filter.strGlass, selectedGlasses, setSelectedGlasses)}
-                            className={selectedGlasses.includes(filter.strGlass) ? 'selected' : ''}
-                          >
-                            {filter.strGlass}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
                   </div>
                   
                   <div className="vl"></div>
 
                   <div className="filters-content">
-                    <h3>Ingredients</h3>
-                    <div className="filters-options">
-                      <ul style={{ columns: 4 }}>
-                        {filterOptions.ingredients.map((filter, index) => (
-                          <li
-                            key={index}
-                            onClick={() => toggleSelectedValue(filter.strIngredient1, selectedIngredients, setSelectedIngredients)}
-                            className={selectedIngredients.includes(filter.strIngredient1) ? 'selected' : ''}
-                          >
-                            {filter.strIngredient1}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    order by
 
                     <div className="filters-buttons">
-                      <div className="cocktail-list-button" onClick={() => handlePrev()}>
+                      <div className="cocktail-list-button" onClick={applyFilters}>
                         apply
                       </div>
-                      <div className="cocktail-list-button" onClick={handleNext}>
+                      <div className="cocktail-list-button" onClick={resetFilters}>
                         reset
                       </div>
                     </div>
 
                   </div>
                 </div>
-
-
-                
               </div>
             </div>
           )}
 
           <div className="grid-movement">
-            <div className="cocktail-list-button" onClick={applyFilters}>
+            <div className="cocktail-list-button" onClick={() => handlePrev()}>
               prev
             </div>
-            <div className="cocktail-list-button" onClick={resetFilters}>
+            <div className="cocktail-list-button" onClick={handleNext}>
               next
             </div>
           </div>
