@@ -20,6 +20,12 @@ const App = () => {
     alcoholic: [],
   });
 
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedAlcoholics, setSelectedAlcoholics] = useState([]);
+  const [selectedGlasses, setSelectedGlasses] = useState([]);
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
+
+
   useEffect(() => {
     window.onscroll = function () {
       myFunction();
@@ -177,6 +183,26 @@ const App = () => {
     console.log("Search Text:", searchText);
   };
 
+  const toggleSelectedValue = (value, selectedValues, setSelectedValues) => {
+    if (selectedValues.includes(value)) {
+      setSelectedValues(selectedValues.filter((selectedValue) => selectedValue !== value));
+    } else {
+      setSelectedValues([...selectedValues, value]);
+    }
+  };
+  
+  
+  const applyFilters = () => {
+    console.log("Filtros aplicados:");
+    closePopup();
+  };
+  
+  const resetFilters = () => {
+    closePopup();
+  };
+
+
+
   return (
     <div className="App">
       <div className="landing">
@@ -272,50 +298,97 @@ const App = () => {
                 <div className="filters-container">
                   <div className="filters-content">
                     <h3>Categories</h3>
-                    <ul>
-                      {filterOptions.categories.map((filter, index) => (
-                        <li key={index}>{filter.strCategory}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="filters-content">
-                    <h3>Glasses</h3>
-                    <ul>
-                      {filterOptions.glasses.map((filter, index) => (
-                        <li key={index}>{filter.strGlass}</li>
+                    <div className="filters-options">
+                      <ul style={{ columns: 2 }}>
+                        {filterOptions.categories.map((filter, index) => (
+                          <li
+                            key={index}
+                            onClick={() => toggleSelectedValue(filter.strCategory, selectedCategories, setSelectedCategories)}
+                            className={selectedCategories.includes(filter.strCategory) ? 'selected' : ''}
+                          >
+                            {filter.strCategory}
+                          </li>
                         ))}
-                    </ul>
+                      </ul>
+
+                    </div>
+
+                    <hr />
+
+                    <h3>Alcohol</h3>
+                    <div className="filters-options">
+                      <ul>
+                        {filterOptions.alcoholic.map((filter, index) => (
+                          <li
+                            key={index}
+                            onClick={() => toggleSelectedValue(filter.strAlcoholic, selectedAlcoholics, setSelectedAlcoholics)}
+                            className={selectedAlcoholics.includes(filter.strAlcoholic) ? 'selected' : ''}
+                          >
+                            {filter.strAlcoholic}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <hr />
+
+                    <h3>Glasses</h3>
+                    <div className="filters-options">
+                      <ul style={{ columns: 2 }}>
+                        {filterOptions.glasses.map((filter, index) => (
+                          <li
+                            key={index}
+                            onClick={() => toggleSelectedValue(filter.strGlass, selectedGlasses, setSelectedGlasses)}
+                            className={selectedGlasses.includes(filter.strGlass) ? 'selected' : ''}
+                          >
+                            {filter.strGlass}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
+                  
+                  <div className="vl"></div>
 
                   <div className="filters-content">
                     <h3>Ingredients</h3>
-                    <ul>
-                      {filterOptions.ingredients.map((filter, index) => (
-                        <li key={index}>{filter.strIngredient1}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div className="filters-content">
-                    <h3>Alcoholic</h3>
-                    <ul>
-                      {filterOptions.alcoholic.map((filter, index) => (
-                        <li key={index}>{filter.strAlcoholic}</li>
-                      ))}
-                    </ul>
+                    <div className="filters-options">
+                      <ul style={{ columns: 4 }}>
+                        {filterOptions.ingredients.map((filter, index) => (
+                          <li
+                            key={index}
+                            onClick={() => toggleSelectedValue(filter.strIngredient1, selectedIngredients, setSelectedIngredients)}
+                            className={selectedIngredients.includes(filter.strIngredient1) ? 'selected' : ''}
+                          >
+                            {filter.strIngredient1}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="filters-buttons">
+                      <div className="cocktail-list-button" onClick={() => handlePrev()}>
+                        apply
+                      </div>
+                      <div className="cocktail-list-button" onClick={handleNext}>
+                        reset
+                      </div>
+                    </div>
+
                   </div>
                 </div>
+
+
                 
               </div>
             </div>
           )}
 
           <div className="grid-movement">
-            <div className="cocktail-list-button" onClick={() => handlePrev()}>
+            <div className="cocktail-list-button" onClick={applyFilters}>
               prev
             </div>
-            <div className="cocktail-list-button" onClick={handleNext}>
+            <div className="cocktail-list-button" onClick={resetFilters}>
               next
             </div>
           </div>

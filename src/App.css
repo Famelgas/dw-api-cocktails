@@ -312,32 +312,66 @@
 
 
 .filters-container {
-  width: 90vw;
-  height: 60vw;
+  width: 90%;
+  height: 90%;
   display: flex;
   flex-direction: row;
   align-items: center;
+  gap: 20px;
   justify-content: space-evenly;
   color: #BD9D5F;
 }
 
 .filters-content {
-  max-width: 20vw;
-  height: 60vw;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   color: #BD9D5F;
 }
 
-.filters-content button {
-  margin-top: 10px;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  background-color: #BD9D5F;
-  color: #151417;
-  font-weight: bold;
+.filters-content hr {
+  border: 1px solid #BD9D5F;
+  width: 100%;
+  border-radius: 20px;
+  margin: 0;
+}
+
+.vl {
+  border: 1px solid #BD9D5F;
+  height: 100%;
+  border-radius: 20px;
+  margin: 0;
+}
+
+.filters-options {
+  display: flex;
+  width: 100%;
+  font: 700 16px Comfortaa;
+  text-align: start;
+  color: #D2C0A0;
+}
+
+.filters-options li {
+  margin: 5px;
+}
+
+.filters-options li.selected {
+  color: #BD9D5F;
+}
+
+
+
+
+.filters-buttons {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-around;
+  color: #BD9D5F;
   cursor: pointer;
 }
