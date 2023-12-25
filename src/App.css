@@ -50,6 +50,7 @@
 .header-button {
   color: #BD9D5F;
   font: 700 30px Comfortaa;
+  cursor: pointer;
 }
 
 .page {
@@ -152,28 +153,6 @@
   cursor: pointer;
 }
 
-/* Adicione essas regras CSS ao seu arquivo de estilos */
-.filters-popup {
-  flex-direction: column;
-}
-
-.filters-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.filters-content button {
-  margin-top: 10px;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  background-color: #BD9D5F;
-  color: #151417;
-  font-weight: bold;
-  cursor: pointer;
-}
-
 .cocktail-list-searchbar {
   width: 387px;
   min-width: 275px;
@@ -247,9 +226,6 @@
   align-items: center;
 }
 
-
-
-
 .popup {
   position: fixed;
   top: 0;
@@ -277,7 +253,7 @@
   font: 700 45px Comfortaa;
   color: #BD9D5F;
   cursor: pointer;
-  z-index: 100;
+  z-index: 150;
 }
 
 .img-container {
@@ -332,4 +308,36 @@
 
 .recipe-text h3 {
   color: #BD9D5F;
+}
+
+
+.filters-container {
+  width: 90vw;
+  height: 60vw;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-evenly;
+  color: #BD9D5F;
+}
+
+.filters-content {
+  max-width: 20vw;
+  height: 60vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #BD9D5F;
+}
+
+.filters-content button {
+  margin-top: 10px;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #BD9D5F;
+  color: #151417;
+  font-weight: bold;
+  cursor: pointer;
 }

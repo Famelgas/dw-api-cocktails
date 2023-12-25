@@ -7,15 +7,18 @@ const App = () => {
   const cocktailsRef = useRef(null);
   const [homeCocktail, setHomeCocktail] = useState({});
   const [currentCocktailIndex, setCurrentCocktailIndex] = useState(0);
+  const [allCocktails, setAllCocktails] = useState([]);
+  
   const [showPopup, setShowPopup] = useState(false);
   const [popupImageSrc, setPopupImageSrc] = useState("");
   const [popupCocktail, setPopupCocktail] = useState(null);
-  const [showFiltersPopup, setShowFiltersPopup] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState([]);
 
-
-  const [allCocktails, setAllCocktails] = useState([]);
-
+  const [filterOptions, setFilterOptions] = useState({
+    categories: [],
+    glasses: [],
+    ingredients: [],
+    alcoholic: [],
+  });
 
   useEffect(() => {
     window.onscroll = function () {
@@ -107,11 +110,38 @@ const App = () => {
 
   const handlePopUp = (cocktail) => {
     setShowPopup(true);
-    setPopupImageSrc(cocktail.strDrinkThumb);
-    setPopupCocktail(cocktail);
+    
+    if (cocktail === null) {
+      setPopupImageSrc("");
+      setPopupCocktail(null);
+      fetchFilterOptions();
+    } else {
+      setPopupImageSrc(cocktail.strDrinkThumb);
+      setPopupCocktail(cocktail);
+    }
+  };
+
+  const fetchFilterOptions = () => {
+    const endpoints = ['c', 'g', 'i', 'a'];
+    const fetchPromises = endpoints.map(endpoint =>
+      fetch(`https://www.thecocktaildb.com/api/json/v1/1/list.php?${endpoint}=list`)
+        .then(response => response.json())
+        .then(data => data.drinks)
+        .catch(error => console.error(`Error fetching ${endpoint} filter options:`, error))
+    );
+
+    Promise.all(fetchPromises)
+      .then(dataArray => {
+        const [categories, glasses, ingredients, alcoholic] = dataArray;
+        setFilterOptions({
+          categories,
+          glasses,
+          ingredients,
+          alcoholic,
+        });
+      });
   };
   
-
   const closePopup = () => {
     setShowPopup(false);
     setPopupImageSrc("");
@@ -132,27 +162,6 @@ const App = () => {
   
     return ingredients;
   };  
-
-  const openFiltersPopup = () => {
-    setShowFiltersPopup(true);
-  };
-  
-  const closeFiltersPopup = () => {
-    setShowFiltersPopup(false);
-  };
-  
-  
-  const applyFilters = () => {
-    // Lógica para aplicar os filtros aqui
-    console.log("Filtros aplicados:", selectedFilters);
-    closeFiltersPopup();
-  };
-  
-  const resetFilters = () => {
-    // Lógica para resetar os filtros aqui
-    setSelectedFilters([]);
-    closeFiltersPopup();
-  };
 
   const handleSearchButton = () => {
     const searchInput = document.getElementById("searchInput").value;
@@ -198,24 +207,8 @@ const App = () => {
 
         <div className="cocktail-list" ref={cocktailsRef}>
           <div className="cocktail-list-header">
-            <div className="cocktail-list-button" onClick={() => handlePopUp("")}>
+            <div className="cocktail-list-button" onClick={() => handlePopUp(null)}>
               filters
-              {showPopup && (
-                <div className="popup">
-                  <div className="popup-container">
-                    <span onClick={closePopup}>&times;</span>
-                    <div className="filters-content">
-                      {/* Conteúdo do popup de filtros */}
-                      <h2>Filters</h2>
-                      {/* Lógica para escolher os filtros (checkboxes, dropdowns, etc.) */}
-                      <button onClick={applyFilters}>Apply Filters</button>
-                      <button onClick={resetFilters}>Reset Filters</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-
             </div>
 
             <div className="cocktail-list-searchbar">
@@ -271,7 +264,52 @@ const App = () => {
             </div>
           )}
 
+          {showPopup && !popupCocktail && (
+            <div className="popup">
+              <div className="popup-container">
+                <span onClick={closePopup}>&times;</span>
 
+                <div className="filters-container">
+                  <div className="filters-content">
+                    <h3>Categories</h3>
+                    <ul>
+                      {filterOptions.categories.map((filter, index) => (
+                        <li key={index}>{filter.strCategory}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="filters-content">
+                    <h3>Glasses</h3>
+                    <ul>
+                      {filterOptions.glasses.map((filter, index) => (
+                        <li key={index}>{filter.strGlass}</li>
+                        ))}
+                    </ul>
+                  </div>
+
+                  <div className="filters-content">
+                    <h3>Ingredients</h3>
+                    <ul>
+                      {filterOptions.ingredients.map((filter, index) => (
+                        <li key={index}>{filter.strIngredient1}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="filters-content">
+                    <h3>Alcoholic</h3>
+                    <ul>
+                      {filterOptions.alcoholic.map((filter, index) => (
+                        <li key={index}>{filter.strAlcoholic}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+          )}
 
           <div className="grid-movement">
             <div className="cocktail-list-button" onClick={() => handlePrev()}>
