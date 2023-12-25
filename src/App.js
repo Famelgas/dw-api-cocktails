@@ -89,14 +89,15 @@ const App = () => {
   };
   
   const handleNext = async () => {
-    if (currentCocktailIndex + 9 >= allCocktails.length) {
-      // Se estiver nos últimos cocktails, busca mais da API
+    if (!selectedCategory && currentCocktailIndex + 9 >= allCocktails.length) {
+      // Se estiver nos últimos cocktails e nenhum filtro aplicado, busca mais da API
       await getNextCocktails();
     }
   
     // Agora, atualize o índice
     setCurrentCocktailIndex(prevIndex => prevIndex + 9);
   };
+  
   
 
   const scrollToRef = (ref) => {
@@ -165,23 +166,37 @@ const App = () => {
     console.log("Search Text:", searchText);
   };
 
-  const toggleSelectedValue = (value, selectedValues, setSelectedValues) => {
-    if (selectedValues.includes(value)) {
-      setSelectedValues(selectedValues.filter((selectedValue) => selectedValue !== value));
-    } else {
-      setSelectedValues([...selectedValues, value]);
+  
+  const applyFilters = async () => {
+    try {
+      if (selectedCategory) {
+        const filteredCocktails = await fetchCocktailsByCategory(selectedCategory);
+        setAllCocktails(filteredCocktails);
+      }
+      closePopup();
+    } catch (error) {
+      console.error("Error applying filters:", error);
     }
-  };
-  
-  
-  const applyFilters = () => {
-    console.log("Filtros aplicados:");
-    closePopup();
   };
   
   const resetFilters = () => {
     closePopup();
   };
+
+  const fetchCocktailsByCategory = async (category) => {
+    try {
+      const response = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/filter.php?c=${category}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.drinks || [];
+    } catch (error) {
+      console.error("Error fetching cocktails by category:", error);
+      throw error;
+    }
+  };
+  
 
 
 
