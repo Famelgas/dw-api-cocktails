@@ -311,9 +311,19 @@
 }
 
 
-.filters-container {
+.filters-page {
   width: 90%;
-  height: 90%;
+  height: 70%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  justify-content: space-evenly;
+  color: #BD9D5F;
+}
+.filters-container {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -348,7 +358,7 @@
 
 .filters-options {
   display: flex;
-  width: 100%;
+  width: 30%;
   font: 700 16px Comfortaa;
   text-align: start;
   color: #D2C0A0;
@@ -367,7 +377,7 @@
   height: 100%;
   display: flex;
   flex-direction: row;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-around;
   color: #BD9D5F;
   cursor: pointer;
