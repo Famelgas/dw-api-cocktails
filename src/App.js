@@ -15,6 +15,7 @@ const App = () => {
 
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [order, setOrder] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   
@@ -52,7 +53,7 @@ const App = () => {
     }
 
     fetchHomeCocktail();
-    getNextCocktails();
+    fetchInitialCocktails();
 
     const intervalId = setInterval(() => {
       fetchHomeCocktail();
@@ -87,6 +88,17 @@ const App = () => {
   };
 
 
+  const fetchInitialCocktails = async () => {
+    try {
+      const initialCocktails = await fetchCocktails();
+      setOriginalCocktails(initialCocktails);
+      setShowCocktails(initialCocktails);
+    } catch (error) {
+      console.error("Error fetching initial cocktails:", error);
+    }
+  };
+
+
   const fetchCategories = () => {
     fetch("https://www.thecocktaildb.com/api/json/v1/1/list.php?c=list")
       .then(response => response.json())
@@ -112,80 +124,73 @@ const App = () => {
           })
           .then(data => data.drinks[0]);
   
-        cocktails.push(cocktail);
+        // Only add the cocktail if it's not already in the list
+        if (!originalCocktails.some(c => c.idDrink === cocktail.idDrink)) {
+          cocktails.push(cocktail);
+        } else {
+          // If it's a duplicate, decrement the loop counter to retry fetching another cocktail
+          i--;
+        }
       }
   
       return cocktails;
     } catch (error) {
       console.error("Error fetching cocktails:", error);
-      throw error; // Rethrow the error to propagate it
+      throw error;
     }
   };
 
 
   const fetchCocktailsCategory = async (category) => {
     try {
-      const cocktails = [];
-  
-      for (let i = 0; i < 9; i++) {
-        const cocktail = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/filter.php?c=${category}`)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then(data => data.drinks[i]);
-  
-        if (cocktail) {
-          const detailedCocktail = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=${cocktail.idDrink}`)
-            .then(response => {
-              if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-              }
-              return response.json();
-            })
-            .then(data => data.drinks[0]);
-  
-          cocktails.push(detailedCocktail);
-        }
-      }
-  
-      return cocktails;
+      const data = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/filter.php?c=${category}`).then(response => response.json());
+      const newCocktails = data.drinks || [];
+      
+      setCocktailsCategory((prevCocktails) => [...prevCocktails, ...newCocktails]);
+      setShowCocktails(newCocktails);
+      
+      return newCocktails;
     } catch (error) {
       console.error("Error fetching cocktails by category:", error);
-      throw error; // Rethrow the error to propagate it
+      throw error;
     }
   };
   
-
-  const fetchCocktailsOrder = async (order) => {
+  const fetchCocktailsOrder = async () => {
     try {
       const cocktails = [];
   
-      const apiUrl = order === 'asc'
-        ? 'https://www.thecocktaildb.com/api/json/v1/1/search.php?s=a' // Example ascending order
-        : 'https://www.thecocktaildb.com/api/json/v1/1/search.php?s=z'; // Example descending order
+      for (let letter = 'a'.charCodeAt(0); letter <= 'z'.charCodeAt(0); letter++) {
+        const response = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${String.fromCharCode(letter)}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
   
-      for (let i = 0; i < 9; i++) {
-        const cocktail = await fetch(apiUrl)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then(data => data.drinks[i]);
+        const data = await response.json();
   
-        cocktails.push(cocktail);
+        if (!data.drinks || data.drinks.length === 0) {
+          // If there are no more cocktails to fetch, break out of the loop
+          console.log("no more cocktails");
+          break;
+        }
+  
+        cocktails.push(...data.drinks);
       }
+  
+      setCocktailsOrder(cocktails);
+      setShowCocktails(cocktails.slice(0, 9));
   
       return cocktails;
     } catch (error) {
       console.error("Error fetching cocktails by order:", error);
-      throw error; // Rethrow the error to propagate it
+      throw error;
     }
   };
+  
+  
+  
+  
   
 
 
@@ -231,20 +236,47 @@ const App = () => {
 
   const applyFilters = async () => {
     try {
-      if (selectedCategory) {
-        const filteredCocktails = await fetchCocktailsCategory(selectedCategory);
-        setShowCocktails(filteredCocktails);
+
+      if (selectedCategory || selectedOrder) {
+        if (selectedCategory) {
+          const filteredCocktails = await fetchCocktailsCategory(selectedCategory);
+          setShowCocktails(filteredCocktails);
+        }
+  
+        if (selectedOrder) {
+          const orderedCocktails = await fetchCocktailsOrder(selectedOrder);
+          if (selectedOrder === 'asc') {
+            orderedCocktails.sort((a, b) => a.strDrink.localeCompare(b.strDrink));
+          } else if (selectedOrder === 'desc') {
+            orderedCocktails.sort((a, b) => b.strDrink.localeCompare(a.strDrink));
+          }
+          setShowCocktails(orderedCocktails);
+        }
+        if (selectedCategory && selectedOrder) {
+          const filteredCocktails = await fetchCocktailsCategory(selectedCategory);
+          const filteredCocktailsSort = filteredCocktails;
+          if (selectedOrder === 'asc') {
+            filteredCocktailsSort.sort((a, b) => a.strDrink.localeCompare(b.strDrink));
+          } else if (selectedOrder === 'desc') {
+            filteredCocktailsSort.sort((a, b) => b.strDrink.localeCompare(a.strDrink));
+          }
+          setShowCocktails(filteredCocktailsSort);
+        }
+      } else {
+        setShowCocktails(originalCocktails);
       }
+  
       closePopup();
     } catch (error) {
       console.error("Error applying filters:", error);
     }
   };
   
+  
   const resetFilters = () => {
-    setShowCocktails(originalCocktails);
     setSelectedCategory(null);
     setSelectedOrder(null);
+    setShowCocktails(originalCocktails);
     closePopup();
   };
   
@@ -311,24 +343,43 @@ const App = () => {
   
   
   const getNextCocktails = async () => {
-      const newCocktails = await fetchCocktails();
-      setOriginalCocktails(prevCocktails => [...prevCocktails, ...newCocktails]);
-      setShowCocktails(prevCocktails => [...prevCocktails, ...newCocktails]);
+    const newCocktails = await fetchCocktails();
+    setOriginalCocktails((prevCocktails) => [...prevCocktails, ...newCocktails]);
+    setShowCocktails((prevCocktails) => [...prevCocktails, ...newCocktails]);
   };
-
-
-  const getNextCocktailsOrder = async () => {
-      const newCocktails = await fetchCocktailsOrder();
-      setCocktailsOrder(prevCocktails => [...prevCocktails, ...newCocktails]);
-      setShowCocktails(prevCocktails => [...prevCocktails, ...newCocktails]);
+  
+  const getNextCocktailsOrder = () => {
+    const nextIndex = currentCocktailIndex + 9;
+    const newCocktails = cocktailsOrder.slice(nextIndex, nextIndex + 9);
+  
+    if (newCocktails.length === 0) {
+      // Fetch more cocktails if the array is empty
+      fetchCocktailsOrder(selectedOrder).then((moreCocktails) => {
+        setCocktailsOrder((prevCocktails) => [...prevCocktails, ...moreCocktails]);
+        setShowCocktails((prevCocktails) => [...prevCocktails, ...moreCocktails]);
+      });
+    } else {
+      setShowCocktails(newCocktails);
+      setCurrentCocktailIndex(nextIndex);
+    }
   };
-
-
-  const getNextCocktailsCategory = async () => {
-      const newCocktails = await fetchCocktailsCategory(selectedCategory);
-      setCocktailsCategory(prevCocktails => [...prevCocktails, ...newCocktails]);
-      setShowCocktails(prevCocktails => [...prevCocktails, ...newCocktails]);
+  
+  const getNextCocktailsCategory = () => {
+    const nextIndex = currentCocktailIndex + 9;
+    const newCocktails = cocktailsCategory.slice(nextIndex, nextIndex + 9);
+  
+    if (newCocktails.length === 0) {
+      // Fetch more cocktails if the array is empty
+      fetchCocktailsCategory(selectedCategory).then((moreCocktails) => {
+        setCocktailsCategory((prevCocktails) => [...prevCocktails, ...moreCocktails]);
+        setShowCocktails((prevCocktails) => [...prevCocktails, ...moreCocktails]);
+      });
+    } else {
+      setShowCocktails(newCocktails);
+      setCurrentCocktailIndex(nextIndex);
+    }
   };
+  
 
 
   
