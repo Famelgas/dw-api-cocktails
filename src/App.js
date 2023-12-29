@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
+import './fonts/Comfortaa.ttf';
 
 const App = () => {
   const navbarRef = useRef(null);
