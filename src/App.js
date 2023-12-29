@@ -37,14 +37,17 @@ const App = () => {
 
 
   useEffect(() => {
+    console.log('Scrolling to the top');
+    window.scrollTo(0, 0);
+
     window.onscroll = function () {
-      myFunction();
+      scrollFunc();
     };
 
     var navbar = document.getElementById("navbar");
     var fixed = navbar.offsetTop;
 
-    function myFunction() {
+    function scrollFunc() {
       if (window.scrollY >= fixed) {
         navbar.classList.add("fixed");
       } else {
@@ -54,13 +57,28 @@ const App = () => {
 
     fetchHomeCocktail();
     fetchInitialCocktails();
+    fetchCategories();
 
-    const intervalId = setInterval(() => {
+
+    const backgroundFetchCocktailsOrder = async () => {
+      try {
+        // delay para nao dar erro: Too many requests
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        await fetchCocktailsOrder();
+      } catch (error) {
+        console.error("Error fetching cocktails by order:", error);
+      }
+    };
+
+
+    backgroundFetchCocktailsOrder();
+
+    const intervalHomePage = setInterval(() => {
       fetchHomeCocktail();
     }, 5000);
 
     return () => {
-      clearInterval(intervalId);
+      clearInterval(intervalHomePage);
     };
   }, []);
 
@@ -79,13 +97,26 @@ const App = () => {
 
 
   const fetchHomeCocktail = () => {
-    fetch("https://www.thecocktaildb.com/api/json/v1/1/random.php/")
-      .then(response => response.json())
-      .then(data => {
-        setHomeCocktail(data.drinks[0]);
-      })
-      .catch(error => console.error("Error fetching home cocktail:", error));
+    try {
+      fetch("https://www.thecocktaildb.com/api/json/v1/1/random.php/")
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          setHomeCocktail(data.drinks[0]);
+        })
+        .catch(error => {
+          console.error("Error fetching home cocktail:", error);
+        });
+    } catch (error) {
+      console.error("Error fetching home cocktail:", error);
+      throw error;
+    }
   };
+  
 
 
   const fetchInitialCocktails = async () => {
@@ -100,14 +131,27 @@ const App = () => {
 
 
   const fetchCategories = () => {
-    fetch("https://www.thecocktaildb.com/api/json/v1/1/list.php?c=list")
-      .then(response => response.json())
-      .then(data => {
-        const categories = data.drinks || [];
-        setCategories(categories);
-      })
-      .catch(error => console.error("Error fetching category filter options:", error));
+    try {
+      fetch("https://www.thecocktaildb.com/api/json/v1/1/list.php?c=list")
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          const categories = data.drinks || [];
+          setCategories(categories);
+        })
+        .catch(error => {
+          console.error("Error fetching categories:", error);
+        });
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      throw error;
+    }
   };
+  
 
 
   const fetchCocktails = async () => {
@@ -179,7 +223,6 @@ const App = () => {
       }
   
       setCocktailsOrder(cocktails);
-      setShowCocktails(cocktails.slice(0, 9));
   
       return cocktails;
     } catch (error) {
@@ -244,13 +287,12 @@ const App = () => {
         }
   
         if (selectedOrder) {
-          const orderedCocktails = await fetchCocktailsOrder(selectedOrder);
           if (selectedOrder === 'asc') {
-            orderedCocktails.sort((a, b) => a.strDrink.localeCompare(b.strDrink));
+            cocktailsOrder.sort((a, b) => a.strDrink.localeCompare(b.strDrink));
           } else if (selectedOrder === 'desc') {
-            orderedCocktails.sort((a, b) => b.strDrink.localeCompare(a.strDrink));
+            cocktailsOrder.sort((a, b) => b.strDrink.localeCompare(a.strDrink));
           }
-          setShowCocktails(orderedCocktails);
+          setShowCocktails(cocktailsOrder);
         }
         if (selectedCategory && selectedOrder) {
           const filteredCocktails = await fetchCocktailsCategory(selectedCategory);
@@ -298,7 +340,6 @@ const App = () => {
     if (cocktail === null) {
       setPopupImageSrc("");
       setPopupCocktail(null);
-      fetchCategories();
     } else {
       console.log("Ingredients:", getIngredients(cocktail)); // Adicione esta linha para verificar os ingredientes no console.
   
