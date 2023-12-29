@@ -9,3 +9,9 @@ body {
 code {
   font-family: Comfortaa;
 }
+
+@font-face {
+  font-family: "Comfortaa";
+  src: local("Comfortaa"),
+   url("./fonts/Comfortaa.ttf") format("truetype");
+ }
