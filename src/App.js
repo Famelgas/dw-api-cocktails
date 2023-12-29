@@ -419,10 +419,31 @@ const App = () => {
     }
   };
 
-  const handleSearch = (searchText) => {
-    console.log("Search Text:", searchText);
+  const handleSearch = async (searchText) => {
+    try {
+      // Fetch cocktails based on the search text
+      const response = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${searchText}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+  
+      // Update state with the search results
+      const searchResults = data.drinks || [];
+      setShowCocktails(searchResults);
+  
+      // Reset other filters
+      setSelectedCategory(null);
+      setSelectedOrder(null);
+      setCurrentCocktailIndex(0);
+      closePopup();
+    } catch (error) {
+      console.error("Error fetching cocktails by search:", error);
+    }
   };
-
+  
 
 
   
