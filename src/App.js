@@ -37,8 +37,9 @@ const App = () => {
 
 
   useEffect(() => {
-    console.log('Scrolling to the top');
-    window.scrollTo(0, 0);
+    window.onbeforeunload = () => {
+      window.scrollTo(0, 0);
+    }
 
     window.onscroll = function () {
       scrollFunc();
@@ -62,8 +63,6 @@ const App = () => {
 
     const backgroundFetchCocktailsOrder = async () => {
       try {
-        // delay para nao dar erro: Too many requests
-        await new Promise(resolve => setTimeout(resolve, 10000));
         await fetchCocktailsOrder();
       } catch (error) {
         console.error("Error fetching cocktails by order:", error);
@@ -204,7 +203,12 @@ const App = () => {
     try {
       const cocktails = [];
   
+      const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+  
       for (let letter = 'a'.charCodeAt(0); letter <= 'z'.charCodeAt(0); letter++) {
+        // Introduce a delay of 10 seconds before each fetch
+        await delay(2000);
+  
         const response = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${String.fromCharCode(letter)}`);
         
         if (!response.ok) {
@@ -230,6 +234,7 @@ const App = () => {
       throw error;
     }
   };
+  
   
   
   
