@@ -16,7 +16,6 @@ const App = () => {
 
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [order, setOrder] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   
@@ -26,14 +25,7 @@ const App = () => {
 
   
   const [showCocktails, setShowCocktails] = useState([]);
-  
-
   const [currentCocktailIndex, setCurrentCocktailIndex] = useState(0);
-
-
-  
-
-
 
 
 
@@ -83,14 +75,6 @@ const App = () => {
   }, []);
 
 
-
-
-
-
-
-
-
-
   
   // fetch
 
@@ -117,7 +101,6 @@ const App = () => {
     }
   };
   
-
 
   const fetchInitialCocktails = async () => {
     try {
@@ -153,7 +136,6 @@ const App = () => {
   };
   
 
-
   const fetchCocktails = async () => {
     try {
       const cocktails = [];
@@ -167,12 +149,10 @@ const App = () => {
             return response.json();
           })
           .then(data => data.drinks[0]);
-  
-        // Only add the cocktail if it's not already in the list
+          
         if (!originalCocktails.some(c => c.idDrink === cocktail.idDrink)) {
           cocktails.push(cocktail);
         } else {
-          // If it's a duplicate, decrement the loop counter to retry fetching another cocktail
           i--;
         }
       }
@@ -188,17 +168,23 @@ const App = () => {
   const fetchCocktailsCategory = async (category) => {
     try {
       const data = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/filter.php?c=${category}`).then(response => response.json());
-      const newCocktails = data.drinks || [];
-      
-      setCocktailsCategory((prevCocktails) => [...prevCocktails, ...newCocktails]);
-      setShowCocktails(newCocktails);
-      
-      return newCocktails;
+      const cocktailsList = data.drinks || [];
+  
+      const cocktailsWithDetails = await Promise.all(cocktailsList.map(async cocktail => {
+        const cocktailDetails = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=${cocktail.idDrink}`).then(response => response.json());
+        return cocktailDetails.drinks[0];
+      }));
+  
+      setCocktailsCategory((prevCocktails) => [...prevCocktails, ...cocktailsWithDetails]);
+      setShowCocktails(cocktailsWithDetails);
+  
+      return cocktailsWithDetails;
     } catch (error) {
       console.error("Error fetching cocktails by category:", error);
       throw error;
     }
   };
+  
   
   const fetchCocktailsOrder = async () => {
     try {
@@ -207,9 +193,7 @@ const App = () => {
       const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
   
       for (let letter = 'a'.charCodeAt(0); letter <= 'z'.charCodeAt(0); letter++) {
-        // Introduce a delay of 10 seconds before each fetch
         await delay(2000);
-  
         const response = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${String.fromCharCode(letter)}`);
         
         if (!response.ok) {
@@ -219,8 +203,6 @@ const App = () => {
         const data = await response.json();
   
         if (!data.drinks || data.drinks.length === 0) {
-          // If there are no more cocktails to fetch, break out of the loop
-          console.log("no more cocktails");
           break;
         }
   
@@ -235,18 +217,6 @@ const App = () => {
       throw error;
     }
   };
-  
-  
-  
-  
-  
-  
-
-
-  
-
-
-
 
 
 
@@ -255,7 +225,6 @@ const App = () => {
   
   const getIngredients = (cocktail) => {
     const ingredients = [];
-  
     for (let i = 1; i <= 15; i++) {
       const ingredientKey = `strIngredient${i}`;
       const measureKey = `strMeasure${i}`;
@@ -266,16 +235,9 @@ const App = () => {
       }
     }
   
-    console.log("Ingredients:", ingredients);
   
     return ingredients;
   };
-
-
-
-
-
-
 
 
 
@@ -285,13 +247,11 @@ const App = () => {
 
   const applyFilters = async () => {
     try {
-
       if (selectedCategory || selectedOrder) {
         if (selectedCategory) {
           const filteredCocktails = await fetchCocktailsCategory(selectedCategory);
           setShowCocktails(filteredCocktails);
         }
-  
         if (selectedOrder) {
           if (selectedOrder === 'asc') {
             cocktailsOrder.sort((a, b) => a.strDrink.localeCompare(b.strDrink));
@@ -327,14 +287,6 @@ const App = () => {
     setShowCocktails(originalCocktails);
     closePopup();
   };
-  
-
-
-  
-  
-
-
-
 
 
   // popup
@@ -347,8 +299,6 @@ const App = () => {
       setPopupImageSrc("");
       setPopupCocktail(null);
     } else {
-      console.log("Ingredients:", getIngredients(cocktail)); // Adicione esta linha para verificar os ingredientes no console.
-  
       setPopupImageSrc(cocktail.strDrinkThumb);
       setPopupCocktail(cocktail);
     }
@@ -358,13 +308,6 @@ const App = () => {
     setShowPopup(false);
     setPopupImageSrc("");
   };
-  
-
-
-
-
-
-
 
 
   // prev e next
@@ -377,9 +320,9 @@ const App = () => {
   const handleNext = async () => {
     if (currentCocktailIndex + 9 >= showCocktails.length) {
       if (selectedCategory) {
-        await getNextCocktailsCategory();
+        getNextCocktailsCategory();
       } else if (selectedOrder) {
-        await getNextCocktailsOrder();
+        getNextCocktailsOrder();
       } else {
         await getNextCocktails();
       }
@@ -400,7 +343,6 @@ const App = () => {
     const newCocktails = cocktailsOrder.slice(nextIndex, nextIndex + 9);
   
     if (newCocktails.length === 0) {
-      // Fetch more cocktails if the array is empty
       fetchCocktailsOrder(selectedOrder).then((moreCocktails) => {
         setCocktailsOrder((prevCocktails) => [...prevCocktails, ...moreCocktails]);
         setShowCocktails((prevCocktails) => [...prevCocktails, ...moreCocktails]);
@@ -416,7 +358,6 @@ const App = () => {
     const newCocktails = cocktailsCategory.slice(nextIndex, nextIndex + 9);
   
     if (newCocktails.length === 0) {
-      // Fetch more cocktails if the array is empty
       fetchCocktailsCategory(selectedCategory).then((moreCocktails) => {
         setCocktailsCategory((prevCocktails) => [...prevCocktails, ...moreCocktails]);
         setShowCocktails((prevCocktails) => [...prevCocktails, ...moreCocktails]);
@@ -428,15 +369,6 @@ const App = () => {
   };
   
 
-
-  
-
-
-
-
-
-
-
   // scroll
 
 
@@ -447,11 +379,6 @@ const App = () => {
     }
   };
 
-
-  
-
-
-
   
   // search
 
@@ -459,29 +386,25 @@ const App = () => {
   const handleSearchButton = () => {
     const searchInput = document.getElementById("searchInput").value;
 
-    console.log("Searching...");
 
     if (searchInput !== "") {
       handleSearch(searchInput);
     }
   };
 
+
   const handleSearch = async (searchText) => {
     try {
-      // Fetch cocktails based on the search text
       const response = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${searchText}`);
-      
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
   
       const data = await response.json();
   
-      // Update state with the search results
       const searchResults = data.drinks || [];
       setShowCocktails(searchResults);
   
-      // Reset other filters
       setSelectedCategory(null);
       setSelectedOrder(null);
       setCurrentCocktailIndex(0);
@@ -492,10 +415,7 @@ const App = () => {
   };
   
 
-
-  
-  
-
+  // page
 
   return (
     <div className="App">
@@ -570,7 +490,6 @@ const App = () => {
                     <h3>Ingredients:</h3>
                     <ul>
                       {getIngredients(popupCocktail).map((ingredient, index) => {
-                        console.log("Ingredient:", ingredient); // Adicione esta linha para verificar cada ingrediente no console.
                         return <li key={index}>{ingredient}</li>;
                       })}
                     </ul>
